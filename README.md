@@ -13,14 +13,14 @@ highway_nodes = Dict{Int64, Node}()
 
 function way_handler(way)
     if haskey(way.tags, "highway")
-        append!(highway_node_ids, way.nodes)
+        union!(highway_node_ids, way.nodes)
     end
 end
 
 function node_handler(node)
     # store node
-    if in(node.id, highway_nodes)
-        nodes[node.id] = node
+    if in(node.id, highway_node_ids)
+        highway_nodes[node.id] = node
     end
 end
 
