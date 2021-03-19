@@ -1,2 +1,3 @@
 [deps]
+CodecZlib = "944b1d66-785c-5afd-91f1-9de20f533193"
 ProtoBuf = "3349acd9-ac6a-5e09-bcdb-63829b23a429"
