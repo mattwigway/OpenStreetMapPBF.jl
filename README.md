@@ -4,6 +4,10 @@ Julia library for reading [OSM PBF](https://wiki.openstreetmap.org/wiki/PBF_Form
 
 ```julia
 
+include("src/OSMPBF.jl")
+
+using .OSMPBF
+
 highway_node_ids = Set{Int64}()
 highway_nodes = Dict{Int64, Node}()
 
