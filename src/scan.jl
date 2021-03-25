@@ -178,6 +178,10 @@ function scan_pbf(pbffile; nodes::Union{Function, Missing}=missing, ways::Union{
 
         @info "Reading file written by $(file_header.writingprogram)"
 
+        # track these to avoid spammy log messages, only log once
+        has_relations = false
+        has_changesets = false
+
         # <= b/c julia starts array indices at 1, so pbf[length(pbf)] is the last byte of the file
         while (off <= length(pbf))
             # TODO should be okay to reuse blob headers right
@@ -192,10 +196,6 @@ function scan_pbf(pbffile; nodes::Union{Function, Missing}=missing, ways::Union{
             # this also means that if a node etc say string x, strtab[x] is the correct string - no off-by-one errors
             # due to Julia starting arrays at 1. 
             strtab::Vector{String} = map(String, block.stringtable.s[2:length(block.stringtable.s)])
-
-            # tract these to avoid spammy log messages, only log once
-            has_relations = false
-            has_changesets = false
 
             for grp in block.primitivegroup
                 if (length(grp.nodes) > 0)
