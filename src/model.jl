@@ -15,11 +15,16 @@ end
 
 @enum RelationMemberType way node relation
 
+struct RelationMember
+    id::Int64
+    type::RelationMemberType
+    role::String
+end
+
 struct Relation
     id::Int64
-    members::Vector{Int64}
-    member_types::Vector{RelationMemberType}
-    roles::Vector{String}
+    members::Vector{RelationMember}
+    tags::Dict{String, String}
 end
 
 # used by load_pbf but not by scan_pbf

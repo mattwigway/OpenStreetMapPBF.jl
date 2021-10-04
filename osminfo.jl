@@ -5,6 +5,7 @@ using .OSMPBF
 function main()
     n_nodes = 0
     n_ways = 0
+    n_rels = 0
 
     w::Float64 = Inf64
     e::Float64 = -Inf64
@@ -21,9 +22,9 @@ function main()
         s = min(n, node.lat)
     end
 
-    @time scan_pbf(ARGS[1], nodes=node_handler, ways=w -> n_ways += 1)
+    @time scan_pbf(ARGS[1], nodes=node_handler, ways=w -> n_ways += 1, relations=r -> n_rels += 1)
 
-    @info "PBF file has $n_nodes nodes and $n_ways ways, bbox $n $e $s $w"
+    @info "PBF file has $n_nodes nodes, $n_ways ways, and $n_rels relations, bbox $n $e $s $w"
 end
 
 main()

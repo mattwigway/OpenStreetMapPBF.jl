@@ -162,6 +162,29 @@ function parse_ways(ways::Vector{OSMPBF_pb.Way}, strtab::Vector{String}, cb::Fun
     return nothing
 end
 
+function parse_relations(relations::Vector{OSMPBF_pb.Relation}, strtab::Vector{String}, cb::Function)
+    for raw_rel in relations
+        relid = raw_rel.id::Int64
+        tags = map(Iterators.zip(raw_rel.keys, raw_rel.vals)) do t
+            return strtab[t[1]] => strtab[t[2]]
+        end |> Dict
+        members = Vector{RelationMember}()
+        sizehint!(members, length(raw_rel.memids))
+
+        memid = 0
+        for i in 1:length(raw_rel.memids)
+            memid += raw_rel.memids[i]  # de-delta-code
+            role = strtab[raw_rel.roles_sid[i]]
+            raw_type = raw_rel.types[i]
+            type = raw_type == OSMPBF_pb.Relation_MemberType.NODE ? node :
+                (raw_type == OSMPBF_pb.Relation_MemberType.WAY ? way : relation)
+            push!(members, RelationMember(memid, type, role))
+        end
+
+        Relation(relid, members, tags) |> cb
+    end
+end
+
 # hoping that the compiler is smart enough that the Any return types won't cause type instability, since the return values are not used...
 function scan_pbf(pbffile; nodes::Union{Function, Missing}=missing, ways::Union{Function, Missing}=missing, relations::Union{Function, Missing}=missing)
     # read the file
@@ -211,9 +234,8 @@ function scan_pbf(pbffile; nodes::Union{Function, Missing}=missing, ways::Union{
                         parse_ways(grp.ways, strtab, ways)
                     end
                 elseif (length(grp.relations) > 0)
-                    if !has_relations
-                        @warn "relations are present in $pbffile, but are not yet supported"
-                        has_relations = true  # don't warn again
+                    if !ismissing(relations)
+                        parse_relations(grp.relations, strtab, relations)
                     end
                 elseif (length(grp.changesets) > 0)
                     if !has_changesets
