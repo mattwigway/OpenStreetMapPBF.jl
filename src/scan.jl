@@ -53,7 +53,7 @@ function parse_nodes(nodelist::Vector{OSMPBF_pb.Node}, block::OSMPBF_pb.Primitiv
         lat = 1e-9 * (block.lat_offset + (block.granularity * raw_node.lat))::Float64
         lon = 1e-9 * (block.lon_offset + (block.granularity * raw_node.lon))::Float64
         tags = map(Iterators.zip(raw_node.keys, raw_node.vals)) do t
-            return strtab[t[1]] => strtab[t[2]]
+            return lowercase(strtab[t[1]]) => strtab[t[2]]
         end |> Dict
         node = Node(
             nodeid,
