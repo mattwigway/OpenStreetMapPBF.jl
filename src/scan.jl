@@ -249,3 +249,8 @@ function scan_pbf(pbffile; nodes::Union{Function, Missing}=missing, ways::Union{
         end
     end
 end
+
+# convenience functions to scan nodes, ways, relations with do block syntax
+scan_nodes(nodefunc, pbffile) = scan_pbf(pbffile, nodes=nodefunc)
+scan_ways(wayfunc, pbffile) = scan_pbf(pbffile, ways=wayfunc)
+scan_relations(relationfunc, pbffile) = scan_pbf(pbffile, relations=relationfunc)

@@ -6,5 +6,5 @@ include("model.jl")
 include("scan.jl")
 include("load.jl")
 
-export scan_pbf, load_pbf, Node, Way, Relation, RelationMemberType
+export scan_pbf, scan_nodes, scan_ways, scan_relations, load_pbf, Node, Way, Relation, way, node, relation
 end
