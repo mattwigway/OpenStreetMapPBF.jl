@@ -1,12 +1,10 @@
 # OSMPBF.jl
 
-Julia library for reading [OSM PBF](https://wiki.openstreetmap.org/wiki/PBF_Format). The basic interface is through the function `scan_pbf`, which is called with callbacks for nodes, ways, and relations. It may require several passes through the file to read everything, as there is no guarantee that (say) nodes come before ways. For instance, this code will extract all nodes that occur in highways.
+Julia library for reading [OSM PBF](https://wiki.openstreetmap.org/wiki/PBF_Format). The basic interface is through the function `scan_pbf`, which is called with callbacks for nodes, ways, and relations. It may require several passes through the file to read everything, as there is no guarantee that (say) nodes come before ways. For instance, this code will extract all nodes that occur in highways. The interface is inspired by the very useful but unfortunately unmaintained [imposm.parser](https://github.com/omniscale/imposm-parser) for Python.
 
 ```julia
 
-include("src/OSMPBF.jl")
-
-using .OSMPBF
+using OSMPBF
 
 highway_node_ids = Set{Int64}()
 highway_nodes = Dict{Int64, Node}()
