@@ -1,4 +1,4 @@
-module OSMPBF
+module OpenStreetMapPBF
 using Logging
 
 include("proto/OSMPBF_pb.jl")

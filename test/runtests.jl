@@ -1,4 +1,4 @@
-using Test, OSMPBF
+using Test, OpenStreetMapPBF
 
 @testset "Read file" begin
     # read the Chapel Hill, North Carolina, USA OSM file that is checked into the repository.

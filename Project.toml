@@ -1,5 +1,5 @@
-name = "OSMPBF"
-uuid = "5c469bec-fd6e-4bbc-be84-fbc5b3a3adfe"
+name = "OpenStreetMapPBF"
+uuid = "32359c53-f983-4442-b913-a1664815e12e"
 authors = ["Matthew Wigginton Conway <matt@indicatrix.org>"]
 version = "0.1.0"
 
