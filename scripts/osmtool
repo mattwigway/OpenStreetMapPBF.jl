@@ -8,10 +8,16 @@ s = ArgParseSettings()
     "--filter-ways"
         help = "Filter ways based on tags"
         arg_type = String
+    "--filter-nodes"
+        help = "Filter nodes based on tags"
+        arg_type = String
     "--no-relations"
         help = "Don't parse relations"
     "--write-gdal-ways"
         help = "Write ways to a GDAL file"
+        arg_type = String
+    "--write-gdal-nodes"
+        help = "Write nodes to a GDAL file"
         arg_type = String
     "--gdal-driver"
         help = "GDAL driver to use (default 'ESRI Shapefile')"
