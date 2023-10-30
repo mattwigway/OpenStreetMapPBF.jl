@@ -131,7 +131,7 @@ function parse_dense_nodes(dense::OSMPBF_pb.DenseNodes, block::OSMPBF_pb.Primiti
         @assert current_node == n + 1
     else
         # special case of no tags
-        for node in 1:n
+        for current_node in 1:n
             Node(ids[current_node], lats[current_node], lons[current_node], Dict{String, String}()) |> cb
         end
     end
