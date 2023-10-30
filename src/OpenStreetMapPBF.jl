@@ -1,7 +1,11 @@
 module OpenStreetMapPBF
 using Logging
+import ProtoBuf: ProtoDecoder, decode
+import Mmap
+import CodecZlib: ZlibDecompressorStream
 
-include("proto/OSMPBF_pb.jl")
+include("proto/OSMPBF/OSMPBF.jl")
+
 include("model.jl")
 include("scan.jl")
 include("load.jl")

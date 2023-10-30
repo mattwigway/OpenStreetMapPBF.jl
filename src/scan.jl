@@ -1,43 +1,36 @@
 # read a PBF format file
 # format documentation: https://wiki.openstreetmap.org/wiki/PBF_Format, https://github.com/mapbox/osmpbf-tutorial
 
-import .OSMPBF_pb
-using ProtoBuf
-using Mmap
-using CodecZlib
-
 # read a blob header (they occur many times in the file). off points to the offset into the PBF of the 
 # header length (which is four raw bytes before the protobuf header)
 # all of these read_* functions return their data, and the offset in the file for the next read
-function read_blob_header(pbf::Vector{UInt8}, off::Int64)::Tuple{OSMPBF_pb.BlobHeader,Int64}
+function read_blob_header(pbf::Vector{UInt8}, off::Int64)::Tuple{OSMPBF.BlobHeader,Int64}
     # read the length of the header
     hdr_len::Int32 = convert(Int32, ntoh(reinterpret(Int32, @view pbf[off:off + 3])[1]))
     off += 4
 
     buf = IOBuffer(@view pbf[off:off + hdr_len - 1])
-    out = readproto(buf, OSMPBF_pb.BlobHeader())
+    dcd = ProtoDecoder(buf)
+    out = decode(dcd, OSMPBF.BlobHeader)
     off += hdr_len
     return out, off
 end
 
-# This reads the header block which occurs once per file
-function read_file_header!(pbf::Vector{UInt8}, off::Int64, blhdr::OSMPBF_pb.BlobHeader, out::OSMPBF_pb.HeaderBlock)::Int64
-    # read the blob
-    off = read_blob!(pbf, off, blhdr, out)
-    return off + b
-end
-
-function read_blob(pbf::Vector{UInt8}, off::Int64, hdr::OSMPBF_pb.BlobHeader, T::Type)::Tuple{T, Int64}
+function read_blob(pbf::Vector{UInt8}, off::Int64, hdr::OSMPBF.BlobHeader, T::Type)::Tuple{T, Int64}
     buf = IOBuffer(@view pbf[off : off + hdr.datasize - 1])
-    blob = readproto(buf, OSMPBF_pb.Blob())
+    dcd = ProtoDecoder(buf)
+    blob = decode(dcd, OSMPBF.Blob)
 
-    if hasproperty(blob, :raw)
-        buf = IOBuffer(blob.raw)
-        out = readproto(buf, T())
-    elseif hasproperty(blob, :zlib_data)
-        buf = ZlibDecompressorStream(IOBuffer(blob.zlib_data))
-        out = readproto(buf, T())
+    if blob.data.name == :raw
+        buf = IOBuffer(blob.data.value)
+        dcd = ProtoDecoder(buf)
+        out = decode(dcd, T)
+    elseif blob.data.name == :zlib_data
+        buf = ZlibDecompressorStream(IOBuffer(blob.data.value))
+        dcd = ProtoDecoder(buf)
+        out = decode(dcd, T)
     else
+        @info blob
         error("Blob not in raw or zlib format")
     end
 
@@ -46,7 +39,7 @@ end
 
 # Parsing raw nodes (i.e. not packed into dense nodes)
 # This function is untested because PBF files with regular rather than dense nodes are few and far between
-function parse_nodes(nodelist::Vector{OSMPBF_pb.Node}, block::OSMPBF_pb.PrimitiveBlock, strtab::Vector{String}, cb::Function)
+function parse_nodes(nodelist::Vector{OSMPBF.Node}, block::OSMPBF.PrimitiveBlock, strtab::Vector{String}, cb::Function)
     @info "got $(length(nodelist)) nodes"
     for raw_node in nodelist
         nodeid = raw_node.id::Int64
@@ -67,7 +60,7 @@ function parse_nodes(nodelist::Vector{OSMPBF_pb.Node}, block::OSMPBF_pb.Primitiv
     return nothing
 end
 
-function parse_dense_nodes(dense::OSMPBF_pb.DenseNodes, block::OSMPBF_pb.PrimitiveBlock, strtab::Vector{String}, cb::Function)
+function parse_dense_nodes(dense::OSMPBF.DenseNodes, block::OSMPBF.PrimitiveBlock, strtab::Vector{String}, cb::Function)
     # first, parse and de-delta-code
     ids = Vector{Int64}()
     lats = Vector{Float64}()
@@ -139,7 +132,7 @@ function parse_dense_nodes(dense::OSMPBF_pb.DenseNodes, block::OSMPBF_pb.Primiti
     return nothing
 end
 
-function parse_ways(ways::Vector{OSMPBF_pb.Way}, strtab::Vector{String}, cb::Function)
+function parse_ways(ways::Vector{OSMPBF.Way}, strtab::Vector{String}, cb::Function)
     for raw_way in ways
         wayid = raw_way.id::Int64
 
@@ -162,7 +155,7 @@ function parse_ways(ways::Vector{OSMPBF_pb.Way}, strtab::Vector{String}, cb::Fun
     return nothing
 end
 
-function parse_relations(relations::Vector{OSMPBF_pb.Relation}, strtab::Vector{String}, cb::Function)
+function parse_relations(relations::Vector{OSMPBF.Relation}, strtab::Vector{String}, cb::Function)
     for raw_rel in relations
         relid = raw_rel.id::Int64
         tags = map(Iterators.zip(raw_rel.keys, raw_rel.vals)) do t
@@ -176,8 +169,8 @@ function parse_relations(relations::Vector{OSMPBF_pb.Relation}, strtab::Vector{S
             memid += raw_rel.memids[i]  # de-delta-code
             role = strtab[raw_rel.roles_sid[i]]
             raw_type = raw_rel.types[i]
-            type = raw_type == OSMPBF_pb.Relation_MemberType.NODE ? node :
-                (raw_type == OSMPBF_pb.Relation_MemberType.WAY ? way : relation)
+            type = raw_type == OSMPBF.var"Relation.MemberType".NODE ? node :
+                (raw_type == OSMPBF.var"Relation.MemberType".WAY ? way : relation)
             push!(members, RelationMember(memid, type, role))
         end
 
@@ -195,9 +188,9 @@ function scan_pbf(pbffile; nodes::Union{Function, Missing}=missing, ways::Union{
 
         blhdr, off = read_blob_header(pbf, off)
 
-        @assert blhdr._type == "OSMHeader"  "Malformed OSM PBF file, expected OSMData block but found $(blhdr._type)"
+        @assert blhdr.var"#type" == "OSMHeader"  "Malformed OSM PBF file, expected OSMData block but found $(blhdr.var"#type")"
 
-         file_header, off = read_blob(pbf, off, blhdr, OSMPBF_pb.HeaderBlock)
+         file_header, off = read_blob(pbf, off, blhdr, OSMPBF.HeaderBlock)
 
         @info "Reading file written by $(file_header.writingprogram)"
 
@@ -209,9 +202,9 @@ function scan_pbf(pbffile; nodes::Union{Function, Missing}=missing, ways::Union{
         while (off <= length(pbf))
             # TODO should be okay to reuse blob headers right
             blhdr, off = read_blob_header(pbf, off)
-            @assert blhdr._type == "OSMData"  "Malformed OSM PBF file, expected OSMData block but found $(blhdr._type)"
+            @assert blhdr.var"#type" == "OSMData"  "Malformed OSM PBF file, expected OSMData block but found $(blhdr.var"#type")"
 
-            block, off = read_blob(pbf, off, blhdr, OSMPBF_pb.PrimitiveBlock)
+            block, off = read_blob(pbf, off, blhdr, OSMPBF.PrimitiveBlock)
 
             # the primitiveblock contains several primitivegroups which may contain nodes, ways, etc.
             # but they reference string tables
@@ -225,7 +218,7 @@ function scan_pbf(pbffile; nodes::Union{Function, Missing}=missing, ways::Union{
                     if !ismissing(nodes)
                         parse_nodes(grp.nodes, block, strtab, nodes)
                     end
-                elseif hasproperty(grp, :dense) && length(grp.dense.id) > 0
+                elseif !isnothing(grp.dense) && length(grp.dense.id) > 0
                     if !ismissing(nodes)
                         parse_dense_nodes(grp.dense, block, strtab, nodes)
                     end
