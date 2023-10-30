@@ -1,7 +1,7 @@
 name = "OpenStreetMapPBF"
 uuid = "32359c53-f983-4442-b913-a1664815e12e"
 authors = ["Matthew Wigginton Conway <matt@indicatrix.org>"]
-version = "0.1.1
+version = "0.1.1"
 
 [deps]
 ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
