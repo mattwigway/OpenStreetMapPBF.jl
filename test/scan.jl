@@ -7,7 +7,7 @@
 
     # Check node loading code
     node_ids = Set{Int64}()
-    found_med_deli = false
+    found_med_deli = [false]
 
     scan_nodes(file) do n
         # no duplicated nodes
@@ -15,7 +15,7 @@
         push!(node_ids, n.id)
 
         if n.id == 3921279444
-            found_med_deli = true
+            found_med_deli[1] = true
             # Check that tags were stored properly, for the best restaurant in Chapel Hill, node version 5
             @test n.tags["name"] == "Mediterranean Deli, Bakery and Catering"
             @test n.tags["addr:city"] == "Chapel Hill"
@@ -44,13 +44,13 @@
         end
     end
 
-    @test found_med_deli
+    @test found_med_deli[1]
 
     @test length(node_ids) == 632572
 
     # check ways
     way_ids = Set{Int64}()
-    found_tanyard = false
+    found_tanyard = [false]
 
     scan_ways(file) do way
         @test way.id ∉ way_ids
@@ -59,7 +59,7 @@
         @test all(way.nodes .∈ Ref(node_ids))
         
         if way.id == 651257375
-            found_tanyard = true
+            found_tanyard[1] = true
 
             @test way.nodes == [5076304249, 7052878634, 5076304252, 5076304253, 5076304254, 7052878635, 5076304255, 5076304256, 7052878636, 5076304257, 5076304258, 5210917959, 4972477818]
 
@@ -78,11 +78,11 @@
         end
     end
 
-    @test found_tanyard
+    @test found_tanyard[1]
     @test length(way_ids) == 50260
 
     rel_ids = Set{Int64}()
-    found_u_turn = false
+    found_u_turn = [false]
 
     scan_relations(file) do r
         @test r.id ∉ rel_ids
@@ -101,12 +101,12 @@
             @test 16711116 ∈ way_ids
             @test 172698088 ∈ node_ids
 
-            found_u_turn = true
+            found_u_turn[1] = true
         end
     end
 
     @test length(rel_ids) == 836
-    @test found_u_turn
+    @test found_u_turn[1]
 
     # not checking that members are in file, as many may not be,
     # for instance most members of https://www.openstreetmap.org/relation/224045 won't be
