@@ -188,7 +188,7 @@ function scan_pbf(pbffile; nodes::Union{Function, Missing}=missing, ways::Union{
 
         blhdr, off = read_blob_header(pbf, off)
 
-        @assert blhdr.var"#type" == "OSMHeader"  "Malformed OSM PBF file, expected OSMData block but found $(blhdr.var"#type")"
+        @assert blhdr.var"#type" == "OSMHeader"  "Malformed OSM PBF file, expected OSMHeader block but found $(blhdr.var"#type")"
 
          file_header, off = read_blob(pbf, off, blhdr, OSMPBF.HeaderBlock)
 
