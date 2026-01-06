@@ -40,3 +40,30 @@
         end
     end
 end
+
+@testitem "Roundtrip complex PBF" begin
+    orig = load_pbf(joinpath(Base.source_dir(), "chapel_hill_nc_usa.osm.pbf"))
+
+    roundtrip = mktemp() do p, io
+        close(io)
+        write_pbf(p, values(orig.nodes), values(orig.ways), values(orig.relations))
+        load_pbf(p)
+    end
+
+    @test length(orig.nodes) == length(roundtrip.nodes)
+    for node ∈ values(orig.nodes)
+        @test node ≈ roundtrip.nodes[node.id]
+    end
+
+    @test length(orig.ways) == length(roundtrip.ways)
+    for way ∈ values(orig.ways)
+        @test way ≈ roundtrip.ways[way.id]
+    end
+
+    @test length(orig.relations) == length(roundtrip.relations)
+    for rel ∈ values(orig.relations)
+        # no floating point values, can use ==
+        @test rel == roundtrip.relations[rel.id]
+    end
+
+end
